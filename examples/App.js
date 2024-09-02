@@ -1,11 +1,16 @@
+import { h } from "../lib/mini-vue.esm.js"
 export const App = {
     render() {
-        return history('div',this.msg)
+        return h('div',{
+            id: 'root',
+            class: ['foo','boo']
+        },
+        [h('p',{class: 'foo'},'hi'),h('p',{class: 'boo'},'mini-vue')]
+        )
     },
     setup() {
         return {
-            msg: 'hello mini-vue',
-
+            msg: 'mini-vue',
         }
     }
 }
