@@ -1,4 +1,4 @@
-import { isObject } from "../shared"
+import { ShapeFlags } from "../shared/ShapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
 
 export function render(vnode, container) {
@@ -7,9 +7,10 @@ export function render(vnode, container) {
 
 function patch(vnode, container) {
     // 处理组件
-    if(typeof vnode.type === 'string') {
+    const { shapeFlag } = vnode
+    if(shapeFlag & ShapeFlags.ELEMENT) {
         processElement(vnode, container)
-    } else if(isObject(vnode.type)) {
+    } else if(shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
         processComponent(vnode, container)
     }
 }
@@ -17,12 +18,12 @@ function processElement(vnode: any, container: any) {
     mountElement(vnode, container)
 }
 function mountElement(vnode: any, container: any) {
-    const {type, props, children} = vnode
-    const el = document.createElement(type)
+    const {type, props, children, shapeFlag} = vnode
+    const el = (vnode.el = document.createElement(type))
     // children
-    if(typeof children === 'string') {
+    if(shapeFlag & ShapeFlags.TEXT_CHILDREN) {
         el.textContent = children
-    } else if (Array.isArray(children)) {
+    } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         mountChildren(vnode,el)
     }
     for(const key of props) {
@@ -36,19 +37,22 @@ function mountChildren(vnode,container) {
 function processComponent(vnode: any, container: any) {
     mountComponent(vnode, container)
 }
-function mountComponent(vnode: any,container: any) {
-    const instance = createComponentInstance(vnode)
+function mountComponent(initialVnode: any,container: any) {
+    const instance = createComponentInstance(initialVnode)
     setupComponent(instance)
-    setupRenderEffect(instance, container)
+    setupRenderEffect(instance, initialVnode, container)
 }
 
 
 
-function setupRenderEffect(instance: any, container:any) {
-    const subTree = instance.render()
+function setupRenderEffect(instance: any, initialVnode: any, container:any) {
+    const { proxy } = instance
+    const subTree = instance.render.call(proxy)
     // vnode -> patch
     // vnode -> element -> mountElement
     patch(subTree,container)
+    // 所有组件都挂载
+    initialVnode.el = subTree.el
 }
 
 
