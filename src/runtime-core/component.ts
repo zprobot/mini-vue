@@ -3,7 +3,7 @@ import { emit } from "./componentEmit"
 import { initProps } from "./componentProps"
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance"
 import { initSlots } from "./componentSlots"
-
+let currentInstance = null
 export function createComponentInstance(vnode: any) {
     const component = {
         vnode,
@@ -28,7 +28,9 @@ function setupStatefulComponent(instance: any) {
     instance.proxy = new Proxy({_:instance},PublicInstanceProxyHandlers)
     const {setup} = Component
     if(setup){
+        setComponentInstance(instance)
         const setupResult = setup(shallowReadonly(instance.props), { emit: instance.emit })
+        setComponentInstance(null)
         handleSetupResult(instance, setupResult)
     }
 }
@@ -48,3 +50,11 @@ function finishComponentSetup(instance: any) {
     }
 }
 
+export function getCurrentInstance() {
+    //返回当前组件的实例对象 只在setup中可用
+    return currentInstance
+}
+
+export function setComponentInstance(instance) {
+    currentInstance = instance
+}
