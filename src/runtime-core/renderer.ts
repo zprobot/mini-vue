@@ -46,7 +46,7 @@ export function createRenderer(options) {
     }
     function mountElement(vnode: any, container: any,parentComponent) {
         const {type, props, children, shapeFlag} = vnode
-        const el = (vnode.el = createElement(type))//document.createElement(type))
+        const el = (vnode.el = createElement(type))
         // children
         if(shapeFlag & ShapeFlags.TEXT_CHILDREN) {
             el.textContent = children
@@ -55,16 +55,8 @@ export function createRenderer(options) {
         }
         for(const key in props) {
             let val = props[key]
-            // const isOn = key => /^on[A-Z]/.test(key)
-            // if(isOn(key)){
-            //     const event = key.slice(2).toLowerCase()
-            //     el.addEventListener(event,val)
-            // }else {
-            //     el.setAttribute(key,val)
-            // }
             patchProp(el,key,val)
         }
-        //container.append(el)
         insert(el, container)
     }
     function mountChildren(vnode,container,parentComponent) {
