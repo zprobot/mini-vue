@@ -1,7 +1,16 @@
-export function transform(root,options:any){
+import { NodeTypes } from "./ast"
+import {TO_DISPLAY_STRING } from "./runtimeHelpers"
+
+export function transform(root,options:any={}){
     const context = createTransformContext(root,options)
     // 深度优先遍历
     traverseNode(root,context)
+    //
+    createRootChildren(root)
+    root.helpers = [...context.helpers.keys()]
+}
+function createRootChildren(root) {
+    root.codegenNode = root.children[0]
 }
 
 function traverseNode(node: any,context: any) {
@@ -11,21 +20,35 @@ function traverseNode(node: any,context: any) {
         const transform = nodeTransforms[i]
         transform(node)
     }
-    // 深度递归每个节点
-    traverseChildren(node,context)
+    switch (node.type) {
+        case NodeTypes.INTERPOLATION:
+            // 处理差值的render函数需要toDisplayString辅助
+            context.helper(TO_DISPLAY_STRING)   
+            break;
+        case NodeTypes.ROOT:
+        case NodeTypes.ELEMENT:
+            traverseChildren(node,context)
+            break;
+        default:
+            break;
+    }
+    
 }
 function traverseChildren(node,context) {
     const children = node.children
-    if(children) {
-        for(let i = 0; i < children.length; i++) {
-            traverseNode(children[i],context)
-        }
+    for(let i = 0; i < children.length; i++) {
+        traverseNode(children[i],context)
     }
+    
 }
 function createTransformContext(root: any, options: any) {
     const context = {
         root,
-        nodeTransforms: options.nodeTransforms || []
+        nodeTransforms: options.nodeTransforms || [],
+        helpers: new Map(),
+        helper(key){
+            context.helpers.set(key,1)
+        }
     }
     return context
 }
