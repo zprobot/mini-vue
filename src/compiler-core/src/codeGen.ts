@@ -1,5 +1,6 @@
+import { isString } from "../../shared"
 import { NodeTypes } from "./ast"
-import { helperMapName, TO_DISPLAY_STRING } from "./runtimeHelpers"
+import { CREATE_ELEMENT_VNODE, helperMapName, TO_DISPLAY_STRING } from "./runtimeHelpers"
 
 export function generate(ast) {
     const context = createCodegenContext()
@@ -32,6 +33,12 @@ function genNode(node,context) {
         case NodeTypes.SAMPLE_EXPRESSION:
             genExpression(node,context)
             break;
+        case NodeTypes.ELEMENT:
+            genElement(node,context)
+            break;
+        case NodeTypes.COMPOUND_EXPRESSION:
+            genCompoundExpression(node,context)
+            break;
         default:
             break;
     }
@@ -43,12 +50,49 @@ function genText(node,context){
 function genInterpolation(node,context) {
     const {push,healper} = context
     push(healper(TO_DISPLAY_STRING))
+    push(`(`)
     genNode(node.content,context)
     push(')')
 }
 function genExpression(node,context) {
     const {push} = context
     push(`${node.content}`)
+}
+function genElement(node,context) {
+    const { push,healper } = context
+    const { tag, children, props } = node
+    push(`${healper(CREATE_ELEMENT_VNODE)}(`)
+    genNodeList(genNullable([tag,props,children]),context)
+    push(')')
+    //genNode(children,context)
+}
+function genNodeList(nodes,context) {
+    const { push } = context
+    for(let i=0;i<nodes.length;i++) {
+        const node = nodes[i]
+        if(isString(node)){
+            push(node)
+        }else {
+            genNode(node,context)
+        }
+        if(i < nodes.length - 1) {
+            push(', ')
+        }
+    }
+}
+function genNullable(args){
+    return args.map(arg => arg || 'null')
+}
+function genCompoundExpression(node,context) {
+    const children = node.children
+    const { push } = context
+    for(const child of children) {
+        if(isString(child)) {
+            push(child)
+        }else {
+            genNode(child,context)
+        }
+    }
 }
 function createCodegenContext() {
     const context = {
@@ -57,7 +101,7 @@ function createCodegenContext() {
             context.code += source
         },
         healper(key) {
-            return `_${helperMapName[key]}(`
+            return `_${helperMapName[key]}`
         }
     }
     return context
