@@ -9,9 +9,9 @@ export function generate(ast) {
     // 处理导入
     genFunctionPreamble(ast,context)
 
-    push('return ')
+    push('return function ')
     const functionName = 'render'
-    const args = ['ctx_','_cache']
+    const args = ['_ctx','_cache']
     const signature = args.join(', ')
     push(`${functionName}(${signature}){`)
     push('return ')

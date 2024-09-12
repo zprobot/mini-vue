@@ -262,7 +262,7 @@ export function createRenderer(options) {
         instance.update = effect(()=>{
             if(!instance.isMounted) {
                 const { proxy } = instance
-                const subTree = instance.subTree = instance.render.call(proxy)
+                const subTree = instance.subTree = instance.render.call(proxy,proxy)
                 // vnode -> patch
                 // vnode -> element -> mountElement
                 // 递归挂载子树
@@ -276,7 +276,7 @@ export function createRenderer(options) {
                     next.el = vnode.el
                     updateComponentPreRender(instance,next)
                 }
-                const subTree = instance.render.call(proxy)
+                const subTree = instance.render.call(proxy,proxy)
                 const preSubTree = instance.subTree
                 instance.subTree = subTree
                 patch(preSubTree,subTree,container,instance,anchor)
